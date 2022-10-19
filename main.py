@@ -5,7 +5,9 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 from transformers import BertForTokenClassification, AdamW, BertTokenizer, BertConfig, get_linear_schedule_with_warmup
 from keras_preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
-from seqeval.metrics import f1_score, accuracy_score
+from seqeval.metrics import accuracy_score
+from sklearn.metrics import f1_score
+
 from tqdm import trange
 
 from utils import getter, augmentation, preprocessing
@@ -245,5 +247,5 @@ for _ in trange(epochs, desc="Epoch"):
     valid_tags = [tag_values[l_i] for l in true_labels
                                   for l_i in l if tag_values[l_i] != "PAD"]
     print("Validation Accuracy: {}".format(accuracy_score(pred_tags, valid_tags)))
-    print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags)))
+    print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags), average="macro"))
     print()
