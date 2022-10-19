@@ -46,9 +46,11 @@ sentences = [row for row in df["pre-tokens"].values]
 labels = [row for row in df["labels"].values]
 
 tag2idx = config["tag_values"]
+tag2idx = {v: k for k, v in tag2idx.items()}
+
 # to be updated
 # Is it necessary to add "PAD" ?
-tag2idx[8] = "PAD"
+tag2idx["PAD"] = 8
 tag_values = list(tag2idx.values())
 
 MAX_LEN = config["MAX_LEN"]
