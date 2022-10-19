@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import yaml
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -251,3 +252,34 @@ for _ in trange(epochs, desc="Epoch"):
     print()
 
     vizualisation.plot_learning_curve(loss_values, validation_loss_values)
+
+
+test_df = pd.read_csv("data/test.csv")
+
+test_sentences = test_df.groupby('sentence_id')['token'].agg(lambda col: ' '.join(col))
+
+for i in test_sentences.index:
+    test_sentence = test_sentences.iloc[i]
+
+    tokenized_sentence = tokenizer.encode(test_sentence)
+    input_ids = torch.tensor([tokenized_sentence]).cuda()
+
+    with torch.no_grad():
+        output = model(input_ids)
+    label_indices = np.argmax(output[0].to('cpu').numpy(), axis=2)
+
+    # join bpe split tokens
+    tokens = tokenizer.convert_ids_to_tokens(input_ids.to('cpu').numpy()[0])
+    new_tokens, new_labels = [], []
+    for token, label_idx in zip(tokens, label_indices[0]):
+        if token.startswith("##"):
+            new_tokens[-1] = new_tokens[-1] + token[2:]
+        else:
+            new_labels.append(tag_values[label_idx])
+            new_tokens.append(token)
+
+
+    predictions = pd.DataFrame(zip(new_tokens, new_labels), columns = ['token', 'Predicted'])
+    for token, label in zip(new_tokens, new_labels):
+        print("{}\t{}".format(label, token))
+        
