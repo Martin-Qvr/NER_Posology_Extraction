@@ -57,8 +57,10 @@ MAX_LEN = config["MAX_LEN"]
 bs = config["bs"]
 
 # to be updated
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# n_gpu = torch.cuda.device_count()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+n_gpu = torch.cuda.device_count()
+print(f'Number of GPUs :{n_gpu}')
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
 
@@ -86,6 +88,14 @@ val_tags = torch.tensor(val_tags)
 tr_masks = torch.tensor(tr_masks)
 val_masks = torch.tensor(val_masks)
 
+### Load the inputs to the GPU
+tr_inputs.to(device)
+val_inputs.to(device)
+tr_tags.to(device)
+val_tags.to(device)
+val_masks.to(device)
+
+
 train_data = TensorDataset(tr_inputs, tr_masks, tr_tags)
 train_sampler = RandomSampler(train_data)
 train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=bs)
@@ -106,6 +116,8 @@ model = BertForTokenClassification.from_pretrained(
     output_attentions = False,
     output_hidden_states = False
 )
+
+model = model.to(device)
 
 FULL_FINETUNING = True
 if FULL_FINETUNING:
