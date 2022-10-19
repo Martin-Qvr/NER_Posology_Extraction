@@ -1,17 +1,32 @@
-print("Starting execution...")
-from utils import preprocessing
 import numpy as np
+import yaml
+import torch
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from transformers import BertForTokenClassification, AdamW, BertTokenizer, BertConfig, get_linear_schedule_with_warmup
+from keras_preprocessing.sequence import pad_sequences
+from sklearn.model_selection import train_test_split
+from seqeval.metrics import f1_score, accuracy_score
+from tqdm import trange
 
-jsonl_filepath = "/Users/arsenetripard/Downloads/all.jsonl"
+from utils import getter, augmentation, preprocessing
 
-df = preprocessing.jsonl_to_dataframe(jsonl_filepath)
+
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+###############################################
+################## GET DATA ###################
+###############################################
+df = getter.jsonl_to_dataframe(config["jsonl_filepath"])
 
 ########################################################
 ################## DATA AUGMENTATION ###################
 ########################################################
 print("Starting data augmentation...")
 
-df = preprocessing.augment_data(df)
+# to be updated 
+# with augmentation functions
+df = augmentation.augment_data(df)
 
 #########################################################
 ################## DATA PREPROCESSING ###################
@@ -20,71 +35,34 @@ print("Starting data preprocessing...")
 
 df = preprocessing.reformat_doccano_output(df)
 
-# pre-tokenize
-df["text"] = df["text"].apply(lambda x: [preprocessing.pre_tokenize(x[i][0], x[i][1]) for i in range(len(x))])
-df["text"] = df["text"].apply(lambda x: sum(x, []))
+df = preprocessing.pre_tokenize(df)
 
-# get list of pre-tokens and list of labels in two columns
-df["pre-tokens"] = df["text"].apply(lambda x: [x[i][0] for i in range(len(x))])
-df["labels"] = df["text"].apply(lambda x: [x[i][1] for i in range(len(x))])
-
-# Keeping rows with less than 512 pre-tokens
+# to be updated
+# Keeping rows with less than 512 pre-tokens because 512 is the max
 df["len_pre-tokens"] = df["pre-tokens"].apply(lambda x: len(x))
 df.loc[df["len_pre-tokens"] < 512]["len_pre-tokens"]
 
 sentences = [row for row in df["pre-tokens"].values]
-
 labels = [row for row in df["labels"].values]
 
-tag_values = ["O", "Treatment", "Dosage", "Form", "Route", "Drug", "Duration", "Frequency"]
-tag_values.append("PAD")
-tag2idx = {t: i for i, t in enumerate(tag_values)}
+tag2idx = config["tag_values"]
+# to be updated
+# Is it necessary to add "PAD" ?
+tag2idx[8] = "PAD"
+tag_values = list(tag2idx.values())
 
-import torch
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertTokenizer, BertConfig
+MAX_LEN = config["MAX_LEN"]
+bs = config["bs"]
 
-from keras_preprocessing.sequence import pad_sequences
-from sklearn.model_selection import train_test_split
-
-MAX_LEN = 512
-bs = 32
-
+# to be updated
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
-n_gpu = torch.cuda.device_count()
-print(device)
-print(n_gpu)
+# n_gpu = torch.cuda.device_count()
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
 
-def tokenize_and_preserve_labels(sentence, text_labels):
-    tokenized_sentence = []
-    labels = []
+tokenized_sentences, labels = preprocessing.tokenize(tokenizer, sentences, labels)
 
-    for word, label in zip(sentence, text_labels):
-
-        # Tokenize the word and count # of subwords the word is broken into
-        tokenized_word = tokenizer.tokenize(word)
-        n_subwords = len(tokenized_word)
-
-        # Add the tokenized word to the final tokenized word list
-        tokenized_sentence.extend(tokenized_word)
-
-        # Add the same label to the new list of labels `n_subwords` times
-        labels.extend([label] * n_subwords)
-
-    return tokenized_sentence, labels
-
-tokenized_texts_and_labels = [
-    tokenize_and_preserve_labels(sent, labs)
-    for sent, labs in zip(sentences, labels)
-]
-
-tokenized_texts = [token_label_pair[0] for token_label_pair in tokenized_texts_and_labels]
-labels = [token_label_pair[1] for token_label_pair in tokenized_texts_and_labels]
-
-input_ids = pad_sequences([tokenizer.convert_tokens_to_ids(txt) for txt in tokenized_texts],
+input_ids = pad_sequences([tokenizer.convert_tokens_to_ids(txt) for txt in tokenized_sentences],
                           maxlen=MAX_LEN, dtype="long", value=0.0,
                           truncating="post", padding="post")
 
@@ -120,8 +98,6 @@ valid_dataloader = DataLoader(valid_data, sampler=valid_sampler, batch_size=bs)
 #####################################################
 print("Starting model setup...")
 
-from transformers import BertForTokenClassification, AdamW
-
 model = BertForTokenClassification.from_pretrained(
     "bert-base-cased",
     num_labels=len(tag2idx),
@@ -149,8 +125,6 @@ optimizer = AdamW(
     eps=1e-8
 )
 
-from transformers import get_linear_schedule_with_warmup
-
 epochs = 3
 max_grad_norm = 1.0
 
@@ -169,10 +143,7 @@ scheduler = get_linear_schedule_with_warmup(
 ########################################################
 print("Starting model training...")
 
-from seqeval.metrics import f1_score, accuracy_score
-from tqdm import trange
-
-## Store the average loss after each epoch so we can plot them.
+# Store the average loss after each epoch so we can plot them.
 loss_values, validation_loss_values = [], []
 
 for _ in trange(epochs, desc="Epoch"):
