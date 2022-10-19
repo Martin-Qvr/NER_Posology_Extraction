@@ -7,8 +7,9 @@ from transformers import BertForTokenClassification, AdamW, BertTokenizer, BertC
 from keras_preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from seqeval.metrics import accuracy_score
+import seaborn    
+from sklearn import metrics
 from sklearn.metrics import f1_score
-
 from tqdm import trange
 
 from utils import getter, augmentation, preprocessing, vizualisation
@@ -249,37 +250,16 @@ for _ in trange(epochs, desc="Epoch"):
                                   for l_i in l if tag_values[l_i] != "PAD"]
     print("Validation Accuracy: {}".format(accuracy_score(pred_tags, valid_tags)))
     print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags), average="macro"))
-    print()
-
-    vizualisation.plot_learning_curve(loss_values, validation_loss_values)
 
 
-test_df = pd.read_csv("data/test.csv")
 
-test_sentences = test_df.groupby('sentence_id')['token'].agg(lambda col: ' '.join(col))
+# # ========================================
+# #               Save model
+# # ========================================
+# # 
+# torch.save(model.state_dict(), "./models/NER_Bert.pt")
+# print("Model saved!")
+confusion_matrix =  seaborn.heatmap(metrics.confusion_matrix(pred_tags, valid_tags))
+confusion_matrix.savefig('confusion_matrix.png', dpi=400)
 
-for i in test_sentences.index:
-    test_sentence = test_sentences.iloc[i]
-
-    tokenized_sentence = tokenizer.encode(test_sentence)
-    input_ids = torch.tensor([tokenized_sentence]).cuda()
-
-    with torch.no_grad():
-        output = model(input_ids)
-    label_indices = np.argmax(output[0].to('cpu').numpy(), axis=2)
-
-    # join bpe split tokens
-    tokens = tokenizer.convert_ids_to_tokens(input_ids.to('cpu').numpy()[0])
-    new_tokens, new_labels = [], []
-    for token, label_idx in zip(tokens, label_indices[0]):
-        if token.startswith("##"):
-            new_tokens[-1] = new_tokens[-1] + token[2:]
-        else:
-            new_labels.append(tag_values[label_idx])
-            new_tokens.append(token)
-
-
-    predictions = pd.DataFrame(zip(new_tokens, new_labels), columns = ['token', 'Predicted'])
-    for token, label in zip(new_tokens, new_labels):
-        print("{}\t{}".format(label, token))
-        
+vizualisation.plot_learning_curve(loss_values, validation_loss_values)
