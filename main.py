@@ -10,7 +10,7 @@ from sklearn.metrics import f1_score
 
 from tqdm import trange
 
-from utils import getter, augmentation, preprocessing
+from utils import getter, augmentation, preprocessing, vizualisation
 
 
 with open("config.yaml") as f:
@@ -249,3 +249,5 @@ for _ in trange(epochs, desc="Epoch"):
     print("Validation Accuracy: {}".format(accuracy_score(pred_tags, valid_tags)))
     print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags), average="macro"))
     print()
+
+    vizualisation.plot_learning_curve(loss_values, validation_loss_values)
