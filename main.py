@@ -286,7 +286,7 @@ for _ in trange(epochs, desc="Epoch"):
 # #               Save model
 # # ========================================
 # # 
-# torch.save(model.state_dict(), "./models/NER_Bert.pt")
+# torch.save(model, "./models/NER_Bert.pt")
 # print("Model saved!")
 confusion_matrix =  seaborn.heatmap(metrics.confusion_matrix(pred_tags, valid_tags))
 confusion_matrix.savefig('confusion_matrix.png', dpi=400)
