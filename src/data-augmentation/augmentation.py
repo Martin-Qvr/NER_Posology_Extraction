@@ -20,6 +20,7 @@ def to_jsonl(data: pd.DataFrame, new_jsonl: str):
 
 #### TO DO : VERIFIER QUE NOS COLONNES DE DATA FRAME SONT HARMONIEUSE #####
 def augment_data(json_path: str,
+                 data_augmented_path: str,
                  back_translation: bool,
                  rd_swapping: bool,
                  rd_deletion: bool,
@@ -76,5 +77,10 @@ def augment_data(json_path: str,
         data = pd.concat([data, df_summarization])
     
     # to_jsonl(data, f"data_augmented{'_bt' if back_translation else ''}{'_rdd' if rd_deletion else ''}{'_rds' if rd_swapping else ''}{'_para' if paraphrase else ''}{'_syn' if synonyms else ''}{'_sum' if summarization else ''}.jsonl")
-    to_jsonl(data, 'data_augmented.jsonl')
+    to_jsonl(data, data_augmented_path)
     
+    if __name__ == "__main__":
+        json_path = config["jsonl_filepath"]
+        data_augmented_path = config["data_augmented.jsonl"]
+
+        augment_data(json_path, data_augmented_path)
