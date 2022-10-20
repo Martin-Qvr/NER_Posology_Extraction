@@ -126,15 +126,15 @@ def create_new_dictionary(id: int, text: str, meta: dict, label: list, comments=
 # data augmentation functions
 
 
-def random_deletion(text: str, p_del: float) -> str:
+def random_deletion(text: str, p: float) -> str:
     """
-    Randomly deletes the words of a text with a probability of p_del.
+    Randomly deletes the words of a text with a probability of p.
     A word will be deleted if a uniformly generated number between 0 and 1 is smaller than 
     a pre-defined threshold. This allows for a random deletion of some words of the sentence.
     
     Args:
         text: The text on which to perform random deletion
-        p_del: The probability for each word to be deleted
+        p: The probability for each word to be deleted
     
     Returns: The ramdomly deleted text
     """
@@ -142,12 +142,12 @@ def random_deletion(text: str, p_del: float) -> str:
     # if only one word, don't delete it
     if len(text) == 1:
         return text
-    # randomly delete text with probability p_del
+    # randomly delete text with probability p
     new_text = []
     for word in text:
         if '.' not in word:
             r = random.uniform(0, 1)
-            if r > p_del:
+            if r > p:
                 new_text.append(word)
         else:
             new_text.append(word)
@@ -180,17 +180,17 @@ def swap_word(text: str) -> str:
     return text
 
 
-def random_swap(text: str, p_swap: float) -> str:
+def random_swap(text: str, p: float) -> str:
     """
-    Randomly swaps p_swap % of the words in a text.
+    Randomly swaps p % of the words in a text.
     
     Args:
         text: The text on which to random swapping
-        p_swap : The proportion of words to be swapped
+        p: The proportion of words to be swapped
     
     Returns: The ramdomly swapped text
     """
-    n = int(len(text) * p_swap / 2)
+    n = int(len(text) * p / 2)
     text = text.split()
     new_text = text.copy()
     for _ in range(n):
@@ -217,73 +217,73 @@ def generate_new_label(new_text: str, enriched_element: dict) -> list:
     return new_label
 
 
-def generate_a_swap_element(element: dict, p_swap: float) -> dict:
+def generate_a_swap_element(element: dict, p: float) -> dict:
     """
     Generates a new dictionary with the swapping-augmented data - updated id, text and label.
     
     Args:
         element: A line of the jsonl file
-        p_swap : The proportion of words to be swapped
+        p: The proportion of words to be swapped
     
     Returns: New dictionary with the swapping-augmented data - updated id, text and label.
     """
     enriched_element = add_enriched_label_to_element(element)
     enriched_element = add_text_for_data_aug_to_element(enriched_element)
-    text = random_swap(enriched_element['text_for_data_aug'], p_swap).replace('#', " ")
+    text = random_swap(enriched_element['text_for_data_aug'], p).replace('#', " ")
     label = generate_new_label(text, enriched_element)
     return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
 
 
-def generate_n_swap_elements(data: list, n: int, p_swap: float) -> list:
+def generate_n_swap_elements(data: list, n: int, p: float) -> list:
     """
     Generates n new dictionaries with swapping-augmented data - updated id, text and label.
     
     Args:
         data: input list of dictionaries (from load_jsonl())
-        n: number of new dictionaries
-        p_swap : The proportion of words to be swapped
+        n: The number of new dictionaries
+        p: The proportion of words to be swapped
     
     Returns: New list of n dictionaries with swapping-augmented data
     """
     elements = random.sample(data, n)
     swap_elements = list()
     for element in elements:
-        swap_elements.append(generate_a_swap_element(element, p_swap))
+        swap_elements.append(generate_a_swap_element(element, p))
     return swap_elements
 
 
-def generate_a_deletion_element(element: dict, p_del: float) -> dict:
+def generate_a_deletion_element(element: dict, p: float) -> dict:
     """
     Generates a new dictionary with the deletion-augmented data - updated id, text and label.
     
     Args:
         element: A line of the jsonl file
-        p_del : The proportion of words to be deleted
+        p: The proportion of words to be deleted
     
     Returns: New dictionary with the deletion-augmented data
     """
     enriched_element = add_enriched_label_to_element(element)
     enriched_element = add_text_for_data_aug_to_element(enriched_element)
-    text = random_deletion(enriched_element['text_for_data_aug'], p_del).replace('#', " ")
+    text = random_deletion(enriched_element['text_for_data_aug'], p).replace('#', " ")
     label = generate_new_label(text, enriched_element)
     return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
 
 
-def generate_n_deletion_elements(data: list, n: int, p_del: float) -> list:
+def generate_n_deletion_elements(data: list, n: int, p: float) -> list:
     """
     Generates n new dictionaries with deletion-augmented data - updated id, text and label.
     
     Args:
         data: input list of dictionaries (from load_jsonl())
-        n: number of new dictionaries
-        p_del : The proportion of words to be deleted
+        n: The number of new dictionaries
+        p: The proportion of words to be deleted
     
     Returns: New list of n dictionaries with swapping-augmented data
     """
     elements = random.sample(data, n)
     del_elements = list()
     for element in elements:
-        del_elements.append(generate_a_deletion_element(element, p_del))
+        del_elements.append(generate_a_deletion_element(element, p))
     return del_elements
 
 
@@ -296,8 +296,8 @@ def to_jsonl(data: pd.DataFrame, new_jsonl_name: str):
     Converts pandas DataFrame to JSON file
 
     Args:
-        data: pandas DataFrame to export in jsonl
-        new_jsonl_name: name of the output jsonl file
+        data: Pandas DataFrame to export in jsonl
+        new_jsonl_name: The name of the output jsonl file
     
     Returns: None
     """
@@ -306,30 +306,34 @@ def to_jsonl(data: pd.DataFrame, new_jsonl_name: str):
         data.to_json(file, force_ascii=False, orient='records', lines=True)
 
 
-def perform_random_deletion_swapping(file_path: str, n: int, p_swap: float, p_del: float) -> None:
+def perform_random_swapping(file_path: str, n: int, p=0.2) -> None:
     """
-    Generates 2 jsonl files with both of n new dictionaries in the working directory:
-        "{n}_random_swaps_p0dot{int(p_swap*100)}.jsonl" - n new random swaps observations
-        "{n}_random_deletions_p0dot{int(p_del*100)}.jsonl" - n new random deletions observations
+    Generates a pandas DataFrame with n new random swaps observations
     
     Args:
         file_path: File path
-        n: number of new dictionaries
-        p_swap : The proportion of words to be swapped
-        p_del : The proportion of words to be deleted
+        n: The number of new dictionaries
+        p: The proportion of words to be swapped
+
     
     Returns: None
     """
     data = load_jsonl(file_path)
-    n_swap_elements = generate_n_swap_elements(data, n, p_swap)
-    n_deletion_elements = generate_n_deletion_elements(data, n, p_del)
-    to_jsonl(pd.DataFrame(n_swap_elements), f'{n}_random_swaps_p0dot{int(p_swap*100)}.jsonl')
-    to_jsonl(pd.DataFrame(n_deletion_elements), f'{n}_random_deletions_p0dot{int(p_del * 100)}.jsonl')
+    n_swap_elements = generate_n_swap_elements(data, n, p)
+    return pd.DataFrame(n_swap_elements)
 
 
-file_path = 'all.jsonl'
-n = 100
-p_swap = 0.1
-p_del = 0.2
-
-perform_random_deletion_swapping(file_path, n, p_swap, p_del)
+def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
+    """
+    Generates a pandas DataFrame with n new random swaps observations
+    
+    Args:
+        file_path: File path
+        n: The number of new dictionaries
+        p: The proportion of words to be deleted
+    
+    Returns: None
+    """
+    data = load_jsonl(file_path)
+    n_deletion_elements = generate_n_deletion_elements(data, n, p)
+    return pd.DataFrame(n_deletion_elements)
