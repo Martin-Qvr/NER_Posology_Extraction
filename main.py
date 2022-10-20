@@ -168,7 +168,7 @@ else:
 
 optimizer = AdamW(
     optimizer_grouped_parameters,
-    lr=3e-4,
+    lr=3e-5,
     eps=1e-8
 )
 
