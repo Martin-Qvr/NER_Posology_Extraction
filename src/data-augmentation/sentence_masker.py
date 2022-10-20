@@ -2,9 +2,18 @@ from transformers import pipeline
 import pandas as pd
 import random
 from nltk.tokenize import sent_tokenize
+from typing import Tuple, List, Any
 
+def split_in_sentences(text: str, labels: list) -> List[Tuple]:
+    ''' Splits a text in sentences and returns the sentences with their respective labels
 
-def split_in_sentences(text: str, labels: list):
+    Args
+    ---
+    text: a string, typically the original text sample
+    labels: a list of labels with their respective start and end positions, as output by doccano
+
+    Returns : a list of type (sentence, list of [start (in sentence), end (in sentence), label])
+    '''
     # replacing newlines by dots so char length does not differ after tokenizing by sentences
     text = text.replace("\n", ".")
     sentences = sent_tokenize(text)
@@ -23,12 +32,12 @@ def split_in_sentences(text: str, labels: list):
         [[lab[0]-tup[1][0], lab[1]-tup[1][0], lab[2]] for lab in labels if (lab[0] >= tup[1][0] and lab[1] <= tup[1][1])])
         sentences_labels.append(label_sentence)
 
-    # is of type (sentence, list of [start (in sentence), end (in sentence), label])
-
     return sentences_labels
 
 
 def man_replace(text: str, labels: list):
+    ''' A utility function to manually replace the spaces in labeled chunks so that they are not splitted afterwards
+    '''
     to_keep = [text[lab[0]:lab[1]] for lab in labels]
     to_replace = [tk.replace(' ', '##') for tk in to_keep]
     for i, tk in enumerate(to_keep):
@@ -36,7 +45,18 @@ def man_replace(text: str, labels: list):
     return text
 
 
-def create_text_to_mask(text: str, labels: list, replacement_ratio: float = 0.1):
+def create_text_to_mask(text: str, labels: list, replacement_ratio: float = 0.1) -> Tuple:
+    '''Given a text, associated labels and a replacement ratio, randomly replaces unlabeled words with <mask> so
+    it can be used with the roberta fill-mask model
+
+    Args
+    ---
+    text: a string, typically a sentence of an original sample
+    labels: a list of labels as output by doccano
+    replacement_ratio: the ratio of words which should be replaced by <mask>
+
+    Returns: a tuple with masked text, a list ofthe masked words and their index and a list of the labeled words and their index
+    '''
 
     words_to_keep_labeled = [(text[f[0]:f[1]], f[2]) for f in labels]
     words_to_keep_labeled = [(f[0].strip().replace(' ', '##'), f[1]) for f in words_to_keep_labeled]
@@ -62,8 +82,20 @@ def create_text_to_mask(text: str, labels: list, replacement_ratio: float = 0.1)
     return (new_text, masked_words_ind, labeled_words_ind)
 
 
-def randomly_replace_with_synonyms_sentence(masked_sentence: str, masked_words_ind: list, labeled_words_ind: list, unmasker, replacement_ratio: float = 0.1):
+def randomly_replace_with_synonyms_sentence(masked_sentence: str, masked_words_ind: list, labeled_words_ind: list, unmasker: Any) -> Tuple:
+    '''Given a masked sentence, fills the masked words with likely replacement
 
+    Args
+    ---
+    masked_sentence: a sentence with <mask> words
+    masked_words_ind: a list ofthe masked words and their index
+    labeled_words_ind: a list of the labeled words and their index
+    unmasker: a transformers pipeline with a fill-mask model
+    
+    Returns: a tuple with the new sentence and the list of the labeled words and their index
+    '''
+
+    # we need to do that otherwise unmasker throws an error
     if "<mask>" not in masked_sentence:
         return (masked_sentence, labeled_words_ind)
 
@@ -72,13 +104,14 @@ def randomly_replace_with_synonyms_sentence(masked_sentence: str, masked_words_i
     for i, tup in enumerate(masked_words_ind):
         masked_word = tup[0]
         ind = tup[1]
+        # in both of the following cases, we do not want to replace our initial word with the same word
         if type(suggested_synonyms[i]) == list:
             # this handles the case where there are multiple masked words in the sentence
             word_synonyms = [d['token_str'] for d in suggested_synonyms[i] if d['token_str'] != masked_word]
         else :
             # this handles the case where there is only one masked word in the sentence
             word_synonyms = [d['token_str'] for d in suggested_synonyms if d['token_str'] != masked_word]
-        if len(word_synonyms)==0:
+        if len(word_synonyms) == 0:
             replacement = masked_word
         else:
             # word synonyms are naturally orderered from the most likely to the least likely
@@ -95,7 +128,18 @@ def randomly_replace_with_synonyms_sentence(masked_sentence: str, masked_words_i
     return (new_sentence, labeled_words_ind)
 
 
-def randomly_replace_with_synonyms_full_text(text: str, labels: list, unmasker, replacement_ratio: float = 0.1):
+def randomly_replace_with_synonyms_full_text(text: str, labels: list, unmasker: Any, replacement_ratio: float = 0.1) -> Tuple:
+    '''Given a masked sentence, fills the masked words with likely replacement
+
+    Args
+    ---
+    text: a string, typically a sentence of an original sample
+    labels: a list of labels as output by doccano
+    unmasker: a transformers pipeline with a fill-mask model
+    replacement_ratio: the ratio of words which should be replaced by <mask>
+    
+    Returns: a tuple with the new text and the list of the labeled words and their index, as doccano would output
+    '''
 
     sentences_labels = split_in_sentences(text, labels)
 
@@ -109,8 +153,7 @@ def randomly_replace_with_synonyms_full_text(text: str, labels: list, unmasker, 
         sentences_list.append(randomly_replace_with_synonyms_sentence(masked_sentence=masked_sentence, 
                                                                 masked_words_ind=masked_words_ind, 
                                                                 labeled_words_ind=labeled_words_ind, 
-                                                                unmasker=unmasker,
-                                                                replacement_ratio=replacement_ratio))
+                                                                unmasker=unmasker))
         full_text = ' '.join([tup[0] for tup in sentences_list])
         labeled_words_new += labeled_words_ind
     word_label_dict = dict([(tup[0].replace("##", ' '), tup[2]) for tup in labeled_words_new])

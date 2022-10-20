@@ -77,7 +77,7 @@ def augment_data(json_path: str,
         print(f" New data points from paraphrase generation : {len(df_paraphrase.index)} lines")
 
     if synonyms:
-        df_synonyms = create_new_samples(json_path)
+        df_synonyms = create_new_samples(json_path, n_new_samples=2000)
         data = pd.concat([data, df_synonyms])
         print(f" New data points from synonyms generation : {len(df_synonyms.index)} lines")
     """
@@ -95,6 +95,6 @@ if __name__ == "__main__":
     json_path = config["jsonl_filepath"]
     data_augmented_path = config["data_augmented_filepath"]
 
-    augment_data(json_path, data_augmented_path)
+    augment_data(json_path, data_augmented_path, paraphrase=False)
 
     os.system("rm raw_data.json") # Remove raw data
