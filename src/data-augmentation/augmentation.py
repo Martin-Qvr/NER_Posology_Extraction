@@ -90,7 +90,7 @@ def augment_data(json_path: str,
     to_jsonl(data, data_augmented_path)
     
 if __name__ == "__main__":
-    os.system(f"curl {config['raw_data_dropbox']}-L -o raw_data.json") # Load raw data
+    os.system(f"curl {config['raw_data_dropbox']} -L -o raw_data.json") # Load raw data
 
     json_path = config["jsonl_filepath"]
     data_augmented_path = config["data_augmented_filepath"]
