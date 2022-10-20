@@ -44,7 +44,7 @@ def convert_labelling(not_summarized_report, summarized_report, original_label_l
     
     converted_labels = []
     
-    if original_label_list = []:
+    if original_label_list == []:
         return([])
     
     else:
@@ -71,8 +71,10 @@ def augment_data_summarized(dataframe):
     
     dataframe.drop(columns=['text', 'labels'], axis=1, inplace=True)
     
-    dataframe.rename({"converted_labels" : "labels"}, axis=1,inplace=True)
+    dataframe.rename({"converted_labels" : "label"}, axis=1,inplace=True)
     dataframe.rename({"summarized_text" : "text"}, axis=1,inplace=True)
+
+    return dataframe
     
     
     

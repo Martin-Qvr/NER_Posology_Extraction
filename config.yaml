@@ -1,4 +1,4 @@
-raw_data_dropbox: "https://www.dropbox.com/s/b4yj51c82e6jyn0/all.jsonl?dl=0 "
+raw_data_dropbox: "https://www.dropbox.com/s/b4yj51c82e6jyn0/all.jsonl?dl=0"
 jsonl_filepath : "raw_data.json"
 
 data_augmented_filepath: "./data/data_augmented.jsonl"
