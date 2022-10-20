@@ -170,13 +170,13 @@ def relabelization(file_name):
     data_paraphrase = new_dataframe_creation(file_name)
     dataset_df = pd.read_json(file_name, lines=True)
     for i in range(len(dataset_df)):
+        label_final = []
         for j in range(len(dataset_df["label"].iloc[i])):
             labels = dataset_df["label"].iloc[i][j]
             labelized_text = dataset_df["text"].iloc[i][labels[0]:labels[1]]
             index_label_0 = str(
             data_paraphrase["text"].iloc[i]).find(labelized_text)
             index_label_1 = index_label_0 + len(labelized_text)
-            label_final = []
             label_final_aux = [index_label_0, index_label_1, labels[2]]
             label_final.append(label_final_aux)
         data_paraphrase["label"].iloc[i] = label_final
