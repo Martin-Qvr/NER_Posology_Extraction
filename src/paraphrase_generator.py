@@ -30,6 +30,7 @@ def to_jsonl(data: pd.DataFrame, new_jsonl: str):
     with open(new_jsonl, 'w', encoding='utf-8') as file:
         data.to_json(file, force_ascii=False, orient='records', lines=True)
 
+
 def get_wordvector_similarity(nlp,replacements):
     """
     From the list of synonyms obtained from Wordnet, apply the 
@@ -88,19 +89,19 @@ def paraphrase_generator(phrase, dataset, i):
                         #print("\tCurrent adjective word:", token.text, "(",len(synonyms),")")
                         if len(synonyms) > 0:
                             replacements[token.text] = synonyms
-                    #if 'VERB' in token.tag_: # if its a verb
-                    #    """Augment the verb with possible synonyms from Wordnet"""
-                    #    syns = wordnet.synsets(token.text,'v', lang=lang)
-                    #    synonyms = set()
-                    #    for eachSynSet in syns:
-                    #        for eachLemma in eachSynSet.lemmas(lang):
-                    #            current_word = eachLemma.name()
-                    #            if current_word.lower() != token.text.lower() and current_word != token.lemma_:
-                    #                synonyms.add(current_word.replace("_"," "))
-                    #    synonyms = list(synonyms)
+                    if 'VERB' in token.tag_: # if its a verb
+                        """Augment the verb with possible synonyms from Wordnet"""
+                        syns = wordnet.synsets(token.text,'v', lang=lang)
+                        synonyms = set()
+                        for eachSynSet in syns:
+                            for eachLemma in eachSynSet.lemmas(lang):
+                                current_word = eachLemma.name()
+                                if current_word.lower() != token.text.lower() and current_word != token.lemma_:
+                                    synonyms.add(current_word.replace("_"," "))
+                        synonyms = list(synonyms)
                         #print("\tCurrent verb word:", token.text, "(",len(synonyms),")")
-                    #    if len(synonyms) > 0:
-                    #        replacements[token.text] = synonyms
+                        if len(synonyms) > 0:
+                            replacements[token.text] = synonyms
         #print("Input(before filtering):\n",sum(map(len, replacements.values())))
         replacements_refined = get_wordvector_similarity(nlp,replacements)
         #print("Output(after filtering based on similarity score):\n",sum(map(len, replacements_refined.values())))
@@ -131,24 +132,22 @@ def final_dataframe_creation(file_name):
     dataset_df = pd.read_json(file_name, lines=True)
     phrases = dataset_df['text']
     data_paraphrase = dataset_df.copy()
-    print("len initiale data_paraphrase:", len(data_paraphrase))
     for i in range(len(phrases)):
         tokenized_phrase = tokenize.sent_tokenize(phrases[i], language='french')
-        print("phrase n°", i)
         for current_sentence in tokenized_phrase:
             paraphrase = paraphrase_generator(current_sentence, dataset_df, i)
             aux = data_paraphrase.loc[data_paraphrase["text"] == phrases[i]]
             for j in range(len(paraphrase)):
                 if str(paraphrase["Phrases"].iloc[j]) != str(paraphrase["Paraphrases"].iloc[j]):
                     phrase_new  = phrases[i].replace(str(current_sentence), str(paraphrase["Paraphrases"].iloc[j]))
+                    phrase_new = phrase_new.replace('\n', '')
                     new_line = {'text': phrase_new}
         aux = aux.append(new_line, ignore_index=True)
         data_paraphrase = pd.concat([data_paraphrase, aux], axis=0)
-        print(len(data_paraphrase))
 
     return data_paraphrase
 
 
 if __name__ == "__main__":
     data_paraphrase = final_dataframe_creation(file_name)
-    to_jsonl(data_paraphrase, "new_json_file")
+    to_jsonl(data_paraphrase, "new_data_from_paraphrase")
