@@ -1,0 +1,14 @@
+jsonl_filepath : "/Users/arsenetripard/Downloads/all.jsonl"
+
+tag_values : 
+  0: Dosage
+  1: Drug
+  2: Duration
+  3: Form
+  4: Frequency
+  5: O
+  6: Route
+  7: Treatment
+
+MAX_LEN : 512
+bs : 32
