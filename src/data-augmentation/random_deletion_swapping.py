@@ -3,6 +3,7 @@
 import random
 import json
 import jsonlines
+import pandas as pd
 
 
 # jsonl and dictionary manipulation
@@ -114,7 +115,7 @@ def add_text_for_data_aug_to_element(enriched_element: dict) -> dict:
 
 def create_new_dictionary(id: int, text: str, meta: dict, label: list, comments=[]) -> dict:
     return {
-          'id': id + 1000
+          'id': id
         , 'text': text
         , 'meta': meta
         , 'label': label
@@ -178,6 +179,7 @@ def swap_word(text: str) -> str:
     text[random_idx_1], text[random_idx_2] = text[random_idx_2], text[random_idx_1] 
     return text
 
+
 def random_swap(text: str, p_swap: float) -> str:
     """
     Randomly swaps p_swap % of the words in a text.
@@ -196,6 +198,7 @@ def random_swap(text: str, p_swap: float) -> str:
     new_text = ' '.join(new_text)
     return new_text
 
+
 def generate_new_label(new_text: str, enriched_element: dict) -> list:
     """
     Generates the new label list for the randomly deleted/swapped text. Necassary as the text
@@ -213,6 +216,7 @@ def generate_new_label(new_text: str, enriched_element: dict) -> list:
             new_label.append([new_text.find(label[-1]), new_text.find(label[-1]) + len(label[-1]), label[-2]])
     return new_label
 
+
 def generate_a_swap_element(element: dict, p_swap: float) -> dict:
     """
     Generates a new dictionary with the swapping-augmented data - updated id, text and label.
@@ -228,6 +232,7 @@ def generate_a_swap_element(element: dict, p_swap: float) -> dict:
     text = random_swap(enriched_element['text_for_data_aug'], p_swap).replace('#', " ")
     label = generate_new_label(text, enriched_element)
     return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+
 
 def generate_n_swap_elements(data: list, n: int, p_swap: float) -> list:
     """
@@ -246,6 +251,7 @@ def generate_n_swap_elements(data: list, n: int, p_swap: float) -> list:
         swap_elements.append(generate_a_swap_element(element, p_swap))
     return swap_elements
 
+
 def generate_a_deletion_element(element: dict, p_del: float) -> dict:
     """
     Generates a new dictionary with the deletion-augmented data - updated id, text and label.
@@ -261,6 +267,7 @@ def generate_a_deletion_element(element: dict, p_del: float) -> dict:
     text = random_deletion(enriched_element['text_for_data_aug'], p_del).replace('#', " ")
     label = generate_new_label(text, enriched_element)
     return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+
 
 def generate_n_deletion_elements(data: list, n: int, p_del: float) -> list:
     """
@@ -282,6 +289,23 @@ def generate_n_deletion_elements(data: list, n: int, p_del: float) -> list:
 
 # perform random deletion and random swapping
 
+
+def to_jsonl(data: pd.DataFrame, new_jsonl_name: str):
+
+    """
+    Converts pandas DataFrame to JSON file
+
+    Args:
+        data: pandas DataFrame to export in jsonl
+        new_jsonl_name: name of the output jsonl file
+    
+    Returns: None
+    """
+
+    with open(new_jsonl_name, 'w', encoding='utf-8') as file:
+        data.to_json(file, force_ascii=False, orient='records', lines=True)
+
+
 def perform_random_deletion_swapping(file_path: str, n: int, p_swap: float, p_del: float) -> None:
     """
     Generates 2 jsonl files with both of n new dictionaries in the working directory:
@@ -299,21 +323,9 @@ def perform_random_deletion_swapping(file_path: str, n: int, p_swap: float, p_de
     data = load_jsonl(file_path)
     n_swap_elements = generate_n_swap_elements(data, n, p_swap)
     n_deletion_elements = generate_n_deletion_elements(data, n, p_del)
+    to_jsonl(pd.DataFrame(n_swap_elements), f'{n}_random_swaps_p0dot{int(p_swap*100)}.jsonl')
+    to_jsonl(pd.DataFrame(n_deletion_elements), f'{n}_random_deletions_p0dot{int(p_del * 100)}.jsonl')
 
-    with open(f'{n}_random_swaps_p0dot{int(p_swap*100)}.jsonl', 'w', encoding='utf-8') as out:
-                for dict in n_swap_elements:
-                    jsonl_out = json.dumps(dict) + '\n'
-                    out.write(jsonl_out)
-
-    with open(f'{n}_random_deletions_p0dot{int(p_del * 100)}.jsonl', 'w', encoding='utf-8') as out:
-                for dict in n_deletion_elements:
-                    jsonl_out = json.dumps(dict) + '\n'
-                    out.write(jsonl_out)
-    # with open(f'{n}_random_swaps_p0dot{int(p_swap*100)}.jsonl', 'w', encoding='utf-8') as file:
-    #     n_swap_elements.to_json(file, force_ascii=False, orient='records', lines=True)
-
-    # with open(f'{n}_random_deletions_p0dot{int(p_del * 100)}.jsonl', 'w', encoding='utf-8') as file:
-    #     n_deletion_elements.to_json(file, force_ascii=False, orient='records', lines=True)
 
 file_path = 'all.jsonl'
 n = 100
