@@ -31,7 +31,9 @@ print("Starting data augmentation...")
 # to be updated 
 # with augmentation functions
 df = augmentation.augment_data(df)
-
+# df.loc[:,"has_label"] = df['label'].apply(lambda x: True if len(x)>0 else False)
+# df = df.loc[df['has_label'] == True]
+# df
 #########################################################
 ################## DATA PREPROCESSING ###################
 #########################################################
@@ -40,6 +42,7 @@ print("Starting data preprocessing...")
 df = preprocessing.reformat_doccano_output(df)
 
 df = preprocessing.pre_tokenize(df)
+
 
 # to be updated
 # Keeping rows with less than 512 pre-tokens because 512 is the max
