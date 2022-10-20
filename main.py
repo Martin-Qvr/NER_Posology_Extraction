@@ -275,7 +275,7 @@ for _ in trange(epochs, desc="Epoch"):
     valid_tags = [tag_values[l_i] for l in true_labels
                                   for l_i in l if tag_values[l_i] != "PAD"]
     print("Validation Accuracy: {}".format(accuracy_score(pred_tags, valid_tags)))
-    print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags), average="macro"))
+    print("Validation F1-Score: {}".format(f1_score(pred_tags, valid_tags), average=None))
 
 
 
