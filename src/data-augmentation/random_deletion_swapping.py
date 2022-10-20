@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import random
 import json
+import random
+
 import jsonlines
 import pandas as pd
-
 
 # jsonl and dictionary manipulation
 
