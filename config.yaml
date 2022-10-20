@@ -1,4 +1,7 @@
-jsonl_filepath : "/Users/arsenetripard/Downloads/all.jsonl"
+raw_data_dropbox: "https://www.dropbox.com/s/b4yj51c82e6jyn0/all.jsonl?dl=0 "
+jsonl_filepath : "raw_data.json"
+
+data_augmented_filepath: "./data/data_augmented.jsonl"
 
 tag_values : 
   0: Dosage
@@ -12,3 +15,7 @@ tag_values :
 
 MAX_LEN : 512
 bs : 32
+
+n_deletion_swap: 100
+prop_swap: 0.2
+prop_del: 0.3

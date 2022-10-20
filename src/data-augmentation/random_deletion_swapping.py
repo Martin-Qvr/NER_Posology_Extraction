@@ -320,7 +320,7 @@ def perform_random_swapping(file_path: str, n: int, p=0.2) -> None:
     """
     data = load_jsonl(file_path)
     n_swap_elements = generate_n_swap_elements(data, n, p)
-    return pd.DataFrame(n_swap_elements)
+    return pd.DataFrame(n_swap_elements).drop(columns=['meta'])
 
 
 def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
@@ -336,4 +336,4 @@ def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
     """
     data = load_jsonl(file_path)
     n_deletion_elements = generate_n_deletion_elements(data, n, p)
-    return pd.DataFrame(n_deletion_elements)
+    return pd.DataFrame(n_deletion_elements).drop(columns=['meta'])
