@@ -21,7 +21,7 @@ with open("config.yaml") as f:
 ###############################################
 ################## GET DATA ###################
 ###############################################
-df = getter.jsonl_to_dataframe(config["jsonl_filepath"])
+df = getter.get_data(config["jsonl_filepath"])
 
 ########################################################
 ################## DATA AUGMENTATION ###################
@@ -45,7 +45,7 @@ df = preprocessing.pre_tokenize(df)
 # Keeping rows with less than 512 pre-tokens because 512 is the max
 df["len_pre-tokens"] = df["pre-tokens"].apply(lambda x: len(x))
 df.loc[df["len_pre-tokens"] < 512]["len_pre-tokens"]
-
+print(df)
 sentences = [row for row in df["pre-tokens"].values]
 labels = [row for row in df["labels"].values]
 
@@ -63,8 +63,8 @@ bs = config["bs"]
 # to be updated
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-n_gpu = torch.cuda.device_count()
-print(f'Number of GPUs :{n_gpu}')
+#n_gpu = torch.cuda.device_count()
+#print(f'Number of GPUs :{n_gpu}')
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
 
