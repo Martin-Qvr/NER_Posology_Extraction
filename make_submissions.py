@@ -45,7 +45,7 @@ for sentence, sentence_ids in zip(test_sentences, tokens_id):
         
     tokenized_sentences.append(tokenized_sentence)
     tokenized_sentences_ids.append(tokenized_sentence_id)
-
+    
 MAX_LEN = config["MAX_LEN"]
 bs = config["bs"]
 
@@ -88,6 +88,14 @@ for batch in valid_dataloader:
 ########################################
 ########## PREDICTIONS TO CSV ##########
 ########################################
-        
+
+#print("len(predictions[0]")
+#print(len(predictions[0]))
+
+#print("len(tokens_id[0])")
+#print(len(tokens_id[0]))
+
+#print("len(tokenized_sentences_ids[0])")
+#print(len(tokenized_sentences_ids[0]))
+
 df_predictions = pd.DataFrame(predictions)
-df_predictions.to_csv("submissions/sub.csv")
