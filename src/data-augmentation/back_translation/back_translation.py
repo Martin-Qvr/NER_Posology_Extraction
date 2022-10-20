@@ -7,13 +7,15 @@ import numpy as np
 import pandas as pd
 import translators as ts
 
-def find_occurrences(s, ch):
+
+def find_occurrences(s: str, ch: str) -> np.array:
 
     """
     Find all occurences of a character in a string an output the list of its position.
     """
 
     return np.array([0] + [i for i, letter in enumerate(s) if letter == ch])
+
 
 def to_jsonl(data: pd.DataFrame, new_jsonl: str):
 
@@ -24,8 +26,8 @@ def to_jsonl(data: pd.DataFrame, new_jsonl: str):
     with open(new_jsonl, 'w', encoding='utf-8') as file:
         data.to_json(file, force_ascii=False, orient='records', lines=True)
 
-# Find closest label
-def get_best_match(query, corpus, step=4, flex=3, case_sensitive=False, verbose=False):
+
+def get_best_match(query: str, corpus: str, step=4, flex=3, case_sensitive=False, verbose=False) -> tuple:
 
     """Return best matching substring of corpus.
 
@@ -52,7 +54,7 @@ def get_best_match(query, corpus, step=4, flex=3, case_sensitive=False, verbose=
         """Compact alias for SequenceMatcher."""
         return SequenceMatcher(None, a, b).ratio()
 
-    def scan_corpus(step):
+    def scan_corpus(step: int):
         """Return list of match values from corpus-wide scan."""
         match_values = []
 
@@ -127,10 +129,12 @@ def get_best_match(query, corpus, step=4, flex=3, case_sensitive=False, verbose=
 
     return corpus[pos_left: pos_right].strip(), match_value
 
+
 def back_translation(json_file: str, new_json_file: str):
 
     """
-    Iterate through existing database to append new data using traduction to English and then back to french on relevant paragraphs.
+    Iterate through existing database to append new data using traduction 
+    to English and then back to french on relevant paragraphs.
     Create a JSON file
 
     Params
@@ -140,11 +144,9 @@ def back_translation(json_file: str, new_json_file: str):
     Outputs
     """
 
-    # JSONL to pandas
-    data = pd.read_json("data.json", lines=True)
+    data = pd.read_json("data.json", lines=True) # JSONL to pandas
 
-    # Duplicate to iterate only on former and add new datas to the augmented data frame
-    data_frame_augmented = data.copy()
+    data_frame_augmented = data.copy() # Duplicate to iterate only on former and add new datas to the augmented data frame
 
     # Traductor package
     gs = goslate.Goslate()
@@ -188,7 +190,12 @@ def back_translation(json_file: str, new_json_file: str):
 
 
 if __name__ == "__main__":
-    # Execute the script by adding the relative path of the needed JSON file and the name of the new JSON file.
-    # Ex : python back_translation.py "data.json" "data_back_translated.json"
+
+    """
+    Execute the script by adding the relative path of the needed JSON file 
+    and the name of the new JSON file.
+    Ex : python back_translation.py "data.json" "data_back_translated.json"
+    """
+
     script, json_file, new_json_file = argv
     back_translation(json_file, new_json_file)
