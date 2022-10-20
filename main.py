@@ -68,9 +68,35 @@ print(f'Number of GPUs :{n_gpu}')
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
 
-tokenized_sentences, labels = preprocessing.tokenize(tokenizer, sentences, labels)
 
-input_ids = pad_sequences([tokenizer.convert_tokens_to_ids(txt) for txt in tokenized_sentences],
+def tokenize_and_preserve_labels(sentence, text_labels):
+    tokenized_sentence = []
+    labels = []
+
+    for word, label in zip(sentence, text_labels):
+
+        # Tokenize the word and count # of subwords the word is broken into
+        tokenized_word = tokenizer.tokenize(word)
+        n_subwords = len(tokenized_word)
+
+        # Add the tokenized word to the final tokenized word list
+        tokenized_sentence.extend(tokenized_word)
+
+        # Add the same label to the new list of labels `n_subwords` times
+        labels.extend([label] * n_subwords)
+
+    return tokenized_sentence, labels
+
+tokenized_texts_and_labels = [
+    tokenize_and_preserve_labels(sent, labs)
+    for sent, labs in zip(sentences, labels)
+]
+
+
+tokenized_texts = [token_label_pair[0] for token_label_pair in tokenized_texts_and_labels]
+labels = [token_label_pair[1] for token_label_pair in tokenized_texts_and_labels]
+
+input_ids = pad_sequences([tokenizer.convert_tokens_to_ids(txt) for txt in tokenized_texts],
                           maxlen=MAX_LEN, dtype="long", value=0.0,
                           truncating="post", padding="post")
 
