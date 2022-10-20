@@ -17,16 +17,6 @@ def find_occurrences(s: str, ch: str) -> np.array:
     return np.array([0] + [i for i, letter in enumerate(s) if letter == ch])
 
 
-def to_jsonl(data: pd.DataFrame, new_jsonl: str):
-
-    """
-    Pandas DataFrame to JSON file
-    """
-
-    with open(new_jsonl, 'w', encoding='utf-8') as file:
-        data.to_json(file, force_ascii=False, orient='records', lines=True)
-
-
 def get_best_match(query: str, corpus: str, step=4, flex=3, case_sensitive=False, verbose=False) -> tuple:
 
     """Return best matching substring of corpus.
@@ -130,7 +120,7 @@ def get_best_match(query: str, corpus: str, step=4, flex=3, case_sensitive=False
     return corpus[pos_left: pos_right].strip(), match_value
 
 
-def back_translation(json_file: str) -> pd.DataFrame:
+def perform_back_translation(json_file: str) -> pd.DataFrame:
 
     """
     Iterate through existing database to append new data using traduction 
@@ -144,24 +134,24 @@ def back_translation(json_file: str) -> pd.DataFrame:
     Outputs
     """
 
-    data = pd.read_json("data.json", lines=True) # JSONL to pandas
+    data = pd.read_json(json_file, lines=True) # JSONL to pandas
 
-    data_frame_augmented = data_frame_augmented = pd.DataFrame(columns=['id','text','labels','Comments'])
+    data_frame_augmented = pd.DataFrame(columns=['id','text','label','Comments'])
 
     # Traductor package
     gs = goslate.Goslate()
 
     for index, row in data.iterrows():
         # Is there label ?
-        if len(row.labels) > 1:
+        if len(row.label) > 1:
             try:
-                first_character_pos = row.labels[0][0] # Get the position of the first character of the first label annotated
-                last_character_pos = row.labels[-1][1] # Same for last
+                first_character_pos = row.label[0][0] # Get the position of the first character of the first label annotated
+                last_character_pos = row.label[-1][1] # Same for last
                 paragraphs_stops = np.append(find_occurrences(row.text, "\n"), np.array(len(row.text) - 1)) # Get the position of the paragraph delimiter
                 paragraph_start = paragraphs_stops[paragraphs_stops < first_character_pos].max() 
                 paragraph_end = paragraphs_stops[paragraphs_stops > last_character_pos].min() # Identify closest paragraph delimiters including all the labels (start if not, end if not)
 
-                list_of_labels = [(row.text[label[0]:label[1]], label[2]) for label in row.labels]
+                list_of_labels = [(row.text[label[0]:label[1]], label[2]) for label in row.label]
                 list_of_labels = [(re.sub(r"/(?=\S+)", " / ", label[0]), label[1]) for label in list_of_labels]
                 list_of_labels = [(label[0].replace("per", "par"), label[1]) for label in list_of_labels]
                 list_of_labels = [(re.sub(r"J(?=\d+)", "j", label[0]), label[1]) for label in list_of_labels]
@@ -185,17 +175,5 @@ def back_translation(json_file: str) -> pd.DataFrame:
         else:
             pass
     
-    print(f" New data points added : {len(data_frame_augmented.index) - len(data.index)} lines")
+    print(f" New data points added : {len(data_frame_augmented.index)} lines")
     return data_frame_augmented
-
-
-if __name__ == "__main__":
-
-    """
-    Execute the script by adding the relative path of the needed JSON file 
-    and the name of the new JSON file.
-    Ex : python back_translation.py "data.json" "data_back_translated.json"
-    """
-
-    script, json_file = argv
-    back_translation(json_file)
