@@ -316,7 +316,7 @@ def perform_random_swapping(file_path: str, n: int, p=0.2) -> None:
         p: The proportion of words to be swapped
 
     
-    Returns: None
+    Returns: pd.DataFrame
     """
     data = load_jsonl(file_path)
     n_swap_elements = generate_n_swap_elements(data, n, p)
@@ -332,7 +332,7 @@ def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
         n: The number of new dictionaries
         p: The proportion of words to be deleted
     
-    Returns: None
+    Returns: pd.DataFrame
     """
     data = load_jsonl(file_path)
     n_deletion_elements = generate_n_deletion_elements(data, n, p)
