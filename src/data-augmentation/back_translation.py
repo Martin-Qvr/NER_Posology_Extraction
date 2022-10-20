@@ -130,7 +130,7 @@ def get_best_match(query: str, corpus: str, step=4, flex=3, case_sensitive=False
     return corpus[pos_left: pos_right].strip(), match_value
 
 
-def back_translation(json_file: str, new_json_file: str):
+def back_translation(json_file: str) -> pd.DataFrame:
 
     """
     Iterate through existing database to append new data using traduction 
@@ -146,7 +146,7 @@ def back_translation(json_file: str, new_json_file: str):
 
     data = pd.read_json("data.json", lines=True) # JSONL to pandas
 
-    data_frame_augmented = data.copy() # Duplicate to iterate only on former and add new datas to the augmented data frame
+    data_frame_augmented = data_frame_augmented = pd.DataFrame(columns=['id','text','labels','Comments'])
 
     # Traductor package
     gs = goslate.Goslate()
@@ -186,7 +186,7 @@ def back_translation(json_file: str, new_json_file: str):
             pass
     
     print(f" New data points added : {len(data_frame_augmented.index) - len(data.index)} lines")
-    to_jsonl(data_frame_augmented, new_json_file)
+    return data_frame_augmented
 
 
 if __name__ == "__main__":
@@ -197,5 +197,5 @@ if __name__ == "__main__":
     Ex : python back_translation.py "data.json" "data_back_translated.json"
     """
 
-    script, json_file, new_json_file = argv
-    back_translation(json_file, new_json_file)
+    script, json_file = argv
+    back_translation(json_file)
