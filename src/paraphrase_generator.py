@@ -143,12 +143,13 @@ def new_dataframe_creation(file_name):
         aux = data_paraphrase.copy()
         for current_sentence in tokenized_phrase:
             paraphrase = paraphrase_generator(current_sentence, dataset_df, i)
-            phrase_new  = phrase_new + paraphrase["Paraphrases"][-1:]
+            ind = len(paraphrase)
+            phrase_new  = phrase_new + paraphrase["Paraphrases"].iloc[-1:]
             phrase_new = phrase_new.replace('\n', '')
             phrase_new = phrase_new.replace("Name: Paraphrases, dtype: object0    ", '')
             phrase_new = phrase_new.replace("Name: Paraphrases, dtype: object", '')
             phrase_new = phrase_new.replace("0    ", '')
-        new_line = {'text': phrase_new}
+        new_line = {'text': str(phrase_new)}
         aux = aux.append(new_line, ignore_index=True)
         aux = aux.iloc[-1:]
         data_paraphrase = pd.concat([data_paraphrase, aux], axis=0)
@@ -159,8 +160,6 @@ def relabelization(file_name):
     Relabelizes the phrases created to have each paraphrased phrase associated to the good labels
     """
     data_paraphrase = new_dataframe_creation(file_name)
-    for i in range(len(data_paraphrase)):
-        data_paraphrase["text"].iloc[i] = data_paraphrase["text"].iloc[i][0]
     dataset_df = pd.read_json(file_name, lines=True)
     for i in range(len(dataset_df)):
         for j in range(len(dataset_df["label"].iloc[i])):
