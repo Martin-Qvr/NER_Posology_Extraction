@@ -4,8 +4,11 @@ import pandas as pd
 import yaml
 
 from back_translation import perform_back_translation
+from paraphrase_generator import new_dataframe_creation
 from random_deletion_swapping import (perform_random_deletion,
                                       perform_random_swapping)
+from sentence_masker import create_new_samples
+# from summarization import augment_data_summarized
 
 with open("./config.yaml") as f:
     config = yaml.safe_load(f)
@@ -21,7 +24,6 @@ def to_jsonl(data: pd.DataFrame, new_jsonl: str):
         data.to_json(file, force_ascii=False, orient='records', lines=True)
 
 
-#### TO DO : VERIFIER QUE NOS COLONNES DE DATA FRAME SONT HARMONIEUSE #####
 def augment_data(json_path: str,
                  data_augmented_path: str,
                  back_translation: bool=True,
@@ -29,7 +31,7 @@ def augment_data(json_path: str,
                  rd_deletion: bool=True,
                  paraphrase: bool=True,
                  synonyms: bool=True,
-                 summarization:bool=True):
+                 summarization:bool=False):
     
     """
     Generates a JSONL file with the chosen augmented data.
@@ -69,24 +71,26 @@ def augment_data(json_path: str,
         data = pd.concat([data, df_rd_swapping])
         print(f" New data points from random swapping : {len(df_rd_swapping.index)} lines")
 
-    """
     if paraphrase:
-        # Add Sarah function
+        df_paraphrase = new_dataframe_creation(json_path)
         data = pd.concat([data, df_paraphrase])
+        print(f" New data points from paraphrase generation : {len(df_paraphrase.index)} lines")
 
     if synonyms:
-        # Add Nathan function
+        df_synonyms = create_new_samples(json_path)
         data = pd.concat([data, df_synonyms])
-
+        print(f" New data points from synonyms generation : {len(df_synonyms.index)} lines")
+    """
     if summarization:
-        # Add Charles G function
+        df_summarization = augment_data_summarized(data)
         data = pd.concat([data, df_summarization])
+        print(f" New data points from summarization : {len(df_synonyms.index)} lines")
     """
     # to_jsonl(data, f"data_augmented{'_bt' if back_translation else ''}{'_rdd' if rd_deletion else ''}{'_rds' if rd_swapping else ''}{'_para' if paraphrase else ''}{'_syn' if synonyms else ''}{'_sum' if summarization else ''}.jsonl")
     to_jsonl(data, data_augmented_path)
     
 if __name__ == "__main__":
-    os.system("curl https://www.dropbox.com/s/b4yj51c82e6jyn0/all.jsonl?dl=0 -L -o raw_data.json") # Load raw data
+    os.system(f"curl {config['raw_data_dropbox']}-L -o raw_data.json") # Load raw data
 
     json_path = config["jsonl_filepath"]
     data_augmented_path = config["data_augmented_filepath"]

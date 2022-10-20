@@ -11,9 +11,9 @@ from nltk import tokenize
 from nltk.tokenize import word_tokenize
 from torch import threshold
 
-#nltk.download('punkt')
-#nltk.download('wordnet')
-#nltk.download('omw-1.4')
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 nlp = spacy.load('fr_core_news_md')
 
