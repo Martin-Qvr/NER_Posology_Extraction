@@ -131,16 +131,13 @@ def create_new_samples(json_path: str, replacement_ratio: float = 0.1):
     file_path = json_path
     origin_df = pd.read_json(path_or_buf=file_path, lines=True)
     unmasker = pipeline('fill-mask', model='xlm-roberta-base')
-    origin_df = origin_df.iloc[50:100, :]
-
-    unmasker = pipeline('fill-mask', model='xlm-roberta-base')
     n_lines = origin_df.shape[0]
     output_dict = {'text': [], 'labels': []}
 
     for i in range(n_lines):
         text = origin_df['text'].iloc[i]
         labels = origin_df['label'].iloc[i]
-        full_text, labels = randomly_replace_with_synonyms_full_text(text=text, labels=labels, unmasker=unmasker)
+        full_text, labels = randomly_replace_with_synonyms_full_text(text=text, labels=labels, unmasker=unmasker, replacement_ratio=replacement_ratio)
         output_dict['text'].append(full_text)
         output_dict['labels'].append(labels)
 
