@@ -175,5 +175,4 @@ def perform_back_translation(json_file: str) -> pd.DataFrame:
         else:
             pass
     
-    print(f" New data points added : {len(data_frame_augmented.index)} lines")
     return data_frame_augmented

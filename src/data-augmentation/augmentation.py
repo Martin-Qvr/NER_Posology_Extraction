@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import yaml
 
@@ -5,7 +7,7 @@ from back_translation import perform_back_translation
 from random_deletion_swapping import (perform_random_deletion,
                                       perform_random_swapping)
 
-with open("../../config.yaml") as f:
+with open("./config.yaml") as f:
     config = yaml.safe_load(f)
 
 
@@ -55,20 +57,17 @@ def augment_data(json_path: str,
     if back_translation:
         df_backtranslation = perform_back_translation(json_path)
         data = pd.concat([data, df_backtranslation])
-        print(df_backtranslation.columns)
-        print(len(df_backtranslation.index))
+        print(f" New data points from back translation : {len(df_backtranslation.index)} lines")
 
     if rd_deletion:
         df_rd_deletion = perform_random_deletion(json_path, n=config["n_deletion_swap"], p=config["prop_del"])
         data = pd.concat([data, df_rd_deletion])
-        print(df_rd_deletion.columns)
-        print(len(df_rd_deletion.index))
+        print(f" New data points from random deletion : {len(df_rd_deletion.index)} lines")
 
     if rd_swapping:
         df_rd_swapping = perform_random_swapping(json_path, n=config["n_deletion_swap"], p=config["prop_swap"])
         data = pd.concat([data, df_rd_swapping])
-        print(df_rd_swapping.columns)
-        print(len(df_rd_swapping.index))
+        print(f" New data points from random swapping : {len(df_rd_swapping.index)} lines")
 
     """
     if paraphrase:
@@ -87,7 +86,11 @@ def augment_data(json_path: str,
     to_jsonl(data, data_augmented_path)
     
 if __name__ == "__main__":
+    os.system("curl https://www.dropbox.com/s/b4yj51c82e6jyn0/all.jsonl?dl=0 -L -o raw_data.json") # Load raw data
 
     json_path = config["jsonl_filepath"]
     data_augmented_path = config["data_augmented_filepath"]
+
     augment_data(json_path, data_augmented_path)
+
+    os.system("rm raw_data.json") # Remove raw data
