@@ -113,11 +113,10 @@ def add_text_for_data_aug_to_element(enriched_element: dict) -> dict:
     return element
 
 
-def create_new_dictionary(id: int, text: str, meta: dict, label: list, comments=[]) -> dict:
+def create_new_dictionary(id: int, text: str, label: list, comments=[]) -> dict:
     return {
           'id': id
         , 'text': text
-        , 'meta': meta
         , 'label': label
         , 'Comments': comments
     }
@@ -231,7 +230,8 @@ def generate_a_swap_element(element: dict, p: float) -> dict:
     enriched_element = add_text_for_data_aug_to_element(enriched_element)
     text = random_swap(enriched_element['text_for_data_aug'], p).replace('#', " ")
     label = generate_new_label(text, enriched_element)
-    return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+    # return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+    return create_new_dictionary(id=element['id'], text=text, label=label, comments=element['Comments'])
 
 
 def generate_n_swap_elements(data: list, n: int, p: float) -> list:
@@ -266,7 +266,8 @@ def generate_a_deletion_element(element: dict, p: float) -> dict:
     enriched_element = add_text_for_data_aug_to_element(enriched_element)
     text = random_deletion(enriched_element['text_for_data_aug'], p).replace('#', " ")
     label = generate_new_label(text, enriched_element)
-    return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+    # return create_new_dictionary(id=element['id'], text=text, meta=element['meta'], label=label, comments=element['Comments'])
+    return create_new_dictionary(id=element['id'], text=text, label=label, comments=element['Comments'])
 
 
 def generate_n_deletion_elements(data: list, n: int, p: float) -> list:
@@ -320,7 +321,7 @@ def perform_random_swapping(file_path: str, n: int, p=0.2) -> None:
     """
     data = load_jsonl(file_path)
     n_swap_elements = generate_n_swap_elements(data, n, p)
-    return pd.DataFrame(n_swap_elements).drop(columns=['meta'])
+    return pd.DataFrame(n_swap_elements)
 
 
 def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
@@ -336,4 +337,4 @@ def perform_random_deletion(file_path: str, n: int, p=0.3) -> None:
     """
     data = load_jsonl(file_path)
     n_deletion_elements = generate_n_deletion_elements(data, n, p)
-    return pd.DataFrame(n_deletion_elements).drop(columns=['meta'])
+    return pd.DataFrame(n_deletion_elements)

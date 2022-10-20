@@ -142,7 +142,6 @@ def perform_back_translation(json_file: str) -> pd.DataFrame:
     gs = goslate.Goslate()
 
     for index, row in data.iterrows():
-        # Is there label ?
         if len(row.label) > 1:
             try:
                 first_character_pos = row.label[0][0] # Get the position of the first character of the first label annotated
