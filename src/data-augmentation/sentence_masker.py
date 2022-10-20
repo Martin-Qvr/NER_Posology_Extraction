@@ -1,4 +1,4 @@
-from transformers import pipeline, AutoTokenizer
+from transformers import pipeline
 import pandas as pd
 import random
 from nltk.tokenize import sent_tokenize
