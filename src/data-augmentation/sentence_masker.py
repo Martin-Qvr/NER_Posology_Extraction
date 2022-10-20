@@ -1,4 +1,4 @@
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer
 import pandas as pd
 import random
 from nltk.tokenize import sent_tokenize
@@ -127,18 +127,31 @@ def randomly_replace_with_synonyms_full_text(text: str, labels: list, unmasker, 
         
     return (full_text, labels)
 
-def create_new_samples(json_path: str, replacement_ratio: float = 0.1):
+def create_new_samples(json_path: str, replacement_ratio_range: tuple = (0.1, 0.5), n_new_samples: int = 1000):
     file_path = json_path
     origin_df = pd.read_json(path_or_buf=file_path, lines=True)
     unmasker = pipeline('fill-mask', model='xlm-roberta-base')
     n_lines = origin_df.shape[0]
     output_dict = {'text': [], 'labels': []}
-
-    for i in range(n_lines):
-        text = origin_df['text'].iloc[i]
-        labels = origin_df['label'].iloc[i]
+    i = 0
+    while i < n_new_samples:
+        # randomly select an original text
+        ind = random.randrange(n_lines)
+        # randomly select a replacement ratio within the specified range
+        replacement_ratio = random.uniform(*replacement_ratio_range)
+        text = origin_df['text'].iloc[ind]
+        labels = origin_df['label'].iloc[ind]
+        if len(labels) == 0:
+            # Skipping because no label (serves no purpose)
+            continue
+        sentences_labels = split_in_sentences(text, labels)
+        max_sentence_length = max([len(t[0]) for t in sentences_labels])
+        if max_sentence_length > 300:
+            # Skipping because a sentence is too long (might throw an error in the huggingface model)
+            continue
         full_text, labels = randomly_replace_with_synonyms_full_text(text=text, labels=labels, unmasker=unmasker, replacement_ratio=replacement_ratio)
         output_dict['text'].append(full_text)
         output_dict['labels'].append(labels)
+        i += 1
 
     return pd.DataFrame(output_dict)
