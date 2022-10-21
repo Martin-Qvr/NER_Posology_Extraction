@@ -1,17 +1,18 @@
 import numpy as np
+import pandas as pd
 import yaml
 import torch
+import seaborn    
+
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import CamembertForTokenClassification, AdamW, get_linear_schedule_with_warmup
+from transformers import BertTokenizer, CamembertForTokenClassification, AdamW, get_linear_schedule_with_warmup
 from keras_preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from seqeval.metrics import accuracy_score
-import seaborn    
 from sklearn import metrics
 from sklearn.metrics import f1_score
 from tqdm import trange
-
-from utils import getter, augmentation, preprocessing, pipeline, vizualisation
+from utils import getter, augmentation, preprocessing, pipeline, vizualisation, submission_helper
 
 
 with open("config.yaml") as f:
@@ -259,12 +260,12 @@ for _ in trange(epochs, desc="Epoch"):
 # # ========================================
 # #               Save model
 # # ========================================
-# # 
+
 torch.save(model, "./models/NER_Bert.pt")
 print("Model saved!")
 
 
- # ========================================
+# # ========================================
 # #               Vizualisation
 # # ========================================
 
@@ -272,3 +273,70 @@ confusion_matrix =  seaborn.heatmap(metrics.confusion_matrix(pred_tags, valid_ta
 confusion_matrix.savefig('confusion_matrix.png', dpi=400)
 
 vizualisation.plot_learning_curve(loss_values, validation_loss_values)
+
+#############################################
+########## GENERATE SUBMISSION CSV ##########
+#############################################
+
+# =============================================
+# ========== Generate submission CSV ==========
+# =============================================
+
+with open("config.yaml") as f:
+    config = yaml.safe_load(f)
+
+# ===============================
+# ========== Load data ==========
+# ===============================
+print("Loading data and model ...")
+    
+test_csv_filepath = ""
+submission_csv_filepath = ""
+
+test_sentences, tokens_id = submission_helper.testcsv_to_sentences(test_csv_filepath, sentences_len=100)
+
+# ======================================
+# ========== Tokenize and pad ==========
+# ======================================
+print("Tokenizing and padding ...")
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-cased', do_lower_case=False)
+
+tokenized_sentences, tokenized_sentences_ids = submission_helper.tokenize_and_adjust_ids(tokenizer, test_sentences, tokens_id)
+
+submission_helper.check_missing_tokens(tokenized_sentences_ids, test_csv_length=3557)
+
+MAX_LEN = config["MAX_LEN"]
+bs = config["bs"]
+
+input_ids = pad_sequences([tokenizer.convert_tokens_to_ids(txt) for txt in tokenized_sentences],
+                          maxlen=MAX_LEN, dtype="long", value=0.0, truncating="post", padding="post")
+
+attention_mask = [[float(i != 0.0) for i in ii] for ii in input_ids]
+
+# ===============================
+# ========== To tensor ==========
+# ===============================
+print("Converting to tensors ...")
+
+valid_dataloader = submission_helper.lists_to_tensors(input_ids, attention_mask)
+
+# ======================================
+# ========== Make predictions ==========
+# ======================================
+print("Making the predictions ...")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model.eval()
+
+predictions = submission_helper.make_predictions(device, valid_dataloader, model)
+
+# ========================================
+# ========== Predictions to CSV ==========
+# ========================================
+print("Saving predictions as csv ...")
+
+new_tokens, new_labels, new_tokens_ids = submission_helper.subtokens_to_tokens(tokenized_sentences, predictions, tokenized_sentences_ids)
+
+submission_helper.prediction_lists_to_csv(new_tokens_ids, new_tokens, new_labels, test_csv_filepath)
