@@ -6,6 +6,7 @@ init-venv:
 	pip install --upgrade pip
 	pip install wheel
 	pip install -r requirements.txt
+	python -m spacy download fr_core_news_md
 
 clean-venv:
 	rm -rf .venv

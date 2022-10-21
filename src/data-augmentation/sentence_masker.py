@@ -171,6 +171,16 @@ def randomly_replace_with_synonyms_full_text(text: str, labels: list, unmasker: 
     return (full_text, labels)
 
 def create_new_samples(json_path: str, replacement_ratio_range: tuple = (0.1, 0.5), n_new_samples: int = 1000):
+    '''Given a path to the original jsonl file as output by doccano, creates new samples
+
+    Args
+    ---
+    json_path: the path to the jsonl file (output by doccano)
+    replacement_ratio_range: a tuple with the bounds for uniform replacement ratio selection
+    n_new_samples: the number of new samples you want to create
+    
+    Returns: a pandas DataFrame with text and labels columns
+    '''
     file_path = json_path
     origin_df = pd.read_json(path_or_buf=file_path, lines=True)
     unmasker = pipeline('fill-mask', model='xlm-roberta-base')
