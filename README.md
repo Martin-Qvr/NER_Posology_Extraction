@@ -7,6 +7,7 @@ In this repo we explore various data augmentation tasks :
 - paraphrase generation
 - random deletion / random swapping
 - summarization
+- synonym generation
 
 We then use the augmented data to fit a transformers model ```CamembertForTokenClassification```[here](https://huggingface.co/camembert-base) from Huggingface's transformers library.
 
