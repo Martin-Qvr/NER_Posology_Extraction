@@ -8,7 +8,7 @@ from paraphrase_generator import new_dataframe_creation
 from random_deletion_swapping import (perform_random_deletion,
                                       perform_random_swapping)
 from sentence_masker import create_new_samples
-# from summarization import augment_data_summarized
+from summarization_stat import augment_data_summarized
 
 with open("./config.yaml") as f:
     config = yaml.safe_load(f)
@@ -80,13 +80,12 @@ def augment_data(json_path: str,
         df_synonyms = create_new_samples(json_path, n_new_samples=2000)
         data = pd.concat([data, df_synonyms])
         print(f" New data points from synonyms generation : {len(df_synonyms.index)} lines")
-    """
+    
     if summarization:
         df_summarization = augment_data_summarized(data)
         data = pd.concat([data, df_summarization])
         print(f" New data points from summarization : {len(df_synonyms.index)} lines")
-    """
-    # to_jsonl(data, f"data_augmented{'_bt' if back_translation else ''}{'_rdd' if rd_deletion else ''}{'_rds' if rd_swapping else ''}{'_para' if paraphrase else ''}{'_syn' if synonyms else ''}{'_sum' if summarization else ''}.jsonl")
+
     to_jsonl(data, data_augmented_path)
     
 if __name__ == "__main__":
@@ -95,6 +94,6 @@ if __name__ == "__main__":
     json_path = config["jsonl_filepath"]
     data_augmented_path = config["data_augmented_filepath"]
 
-    augment_data(json_path, data_augmented_path, paraphrase=False)
+    augment_data(json_path)
 
     os.system("rm raw_data.json") # Remove raw data
